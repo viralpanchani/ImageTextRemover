@@ -1,0 +1,54 @@
+# Git files
+.git
+.gitignore
+
+# Documentation
+*.md
+README.md
+DEPLOYMENT_README.md
+SETUP_GUIDE.md
+SIMPLE_INSTRUCTIONS.md
+
+# Development files
+.qodo/
+*.bat
+*.sh
+setup.py
+install.*
+run.*
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Logs
+*.log
+
+# Railway config (not needed in container)
+railway.toml
+
+# Runtime files that will be created
+uploads/*
+processed/*
+!uploads/.gitkeep
+!processed/.gitkeep
