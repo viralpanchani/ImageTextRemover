@@ -19,7 +19,7 @@ PROCESSED_FOLDER = 'processed'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
-# Initialize EasyOCR reader with SSL context fix
+# Initialize EasyOCR reader with SSL context fix (optional for smaller deployments)
 reader = None
 try:
     # Fix SSL certificate issue
@@ -27,6 +27,8 @@ try:
     import easyocr
     reader = easyocr.Reader(['en'])
     print("EasyOCR initialized successfully")
+except ImportError:
+    print("EasyOCR not installed - using OpenCV-based text detection")
 except Exception as e:
     print(f"EasyOCR initialization failed: {e}")
     print("Will use OpenCV-based text detection as fallback")
