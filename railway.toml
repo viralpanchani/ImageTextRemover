@@ -6,3 +6,6 @@ startCommand = "python app.py"
 healthcheckPath = "/"
 healthcheckTimeout = 100
 restartPolicyType = "on_failure"
+
+[build.env]
+PYTHON_VERSION = "3.11.7"
