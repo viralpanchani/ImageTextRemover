@@ -35,6 +35,21 @@ class TextRemoverApp {
         this.newImageBtn = document.getElementById('newImageBtn');
         this.retryBtn = document.getElementById('retryBtn');
         this.errorText = document.getElementById('errorText');
+        
+        // Text addition elements
+        this.addTextBtn = document.getElementById('addTextBtn');
+        this.textAdditionSection = document.getElementById('textAdditionSection');
+        this.textInput = document.getElementById('textInput');
+        this.fontSize = document.getElementById('fontSize');
+        this.fontSizeValue = document.getElementById('fontSizeValue');
+        this.textColor = document.getElementById('textColor');
+        this.applyTextBtn = document.getElementById('applyTextBtn');
+        this.cancelTextBtn = document.getElementById('cancelTextBtn');
+        this.textPreviewImage = document.getElementById('textPreviewImage');
+        this.textPositionMarker = document.getElementById('textPositionMarker');
+        
+        // Text addition state
+        this.textPosition = null;
     }
 
     attachEventListeners() {
@@ -55,6 +70,14 @@ class TextRemoverApp {
         this.downloadBtn.addEventListener('click', this.downloadImage.bind(this));
         this.newImageBtn.addEventListener('click', this.resetApp.bind(this));
         this.retryBtn.addEventListener('click', this.hideError.bind(this));
+        
+        // Text addition events
+        this.addTextBtn.addEventListener('click', this.showTextAddition.bind(this));
+        this.applyTextBtn.addEventListener('click', this.applyText.bind(this));
+        this.cancelTextBtn.addEventListener('click', this.cancelTextAddition.bind(this));
+        this.textInput.addEventListener('input', this.updateApplyButton.bind(this));
+        this.fontSize.addEventListener('input', this.updateFontSize.bind(this));
+        this.textPreviewImage.addEventListener('click', this.selectTextPosition.bind(this));
 
         // Brush controls
         this.brushSizeSlider.addEventListener('input', this.updateBrushSize.bind(this));
@@ -477,11 +500,123 @@ class TextRemoverApp {
         this.proceedBtn.disabled = this.brushStrokes.length === 0;
     }
 
+    showTextAddition() {
+        if (!this.currentFilename) {
+            this.showError('No processed image available. Please process an image first.');
+            return;
+        }
+        
+        this.hideAllSections();
+        this.textAdditionSection.style.display = 'block';
+        
+        // Set the preview image to the processed image
+        this.textPreviewImage.src = this.processedImage.src;
+        
+        // Reset text addition state
+        this.textPosition = null;
+        this.textInput.value = '';
+        this.fontSize.value = 40;
+        this.updateFontSize();
+        this.textColor.value = '#000000';
+        this.textPositionMarker.style.display = 'none';
+        this.updateApplyButton();
+    }
+    
+    selectTextPosition(e) {
+        const img = this.textPreviewImage;
+        const rect = img.getBoundingClientRect();
+        
+        // Calculate position relative to the image
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Calculate actual image coordinates
+        const scaleX = img.naturalWidth / img.offsetWidth;
+        const scaleY = img.naturalHeight / img.offsetHeight;
+        
+        this.textPosition = {
+            x: Math.round(x * scaleX),
+            y: Math.round(y * scaleY)
+        };
+        
+        // Show position marker
+        this.textPositionMarker.style.left = x + 'px';
+        this.textPositionMarker.style.top = y + 'px';
+        this.textPositionMarker.style.display = 'block';
+        
+        this.updateApplyButton();
+    }
+    
+    updateFontSize() {
+        const size = this.fontSize.value;
+        this.fontSizeValue.textContent = size + 'px';
+    }
+    
+    updateApplyButton() {
+        const hasText = this.textInput.value.trim().length > 0;
+        const hasPosition = this.textPosition !== null;
+        this.applyTextBtn.disabled = !(hasText && hasPosition);
+    }
+    
+    async applyText() {
+        if (!this.textPosition || !this.textInput.value.trim()) {
+            this.showError('Please enter text and select a position on the image');
+            return;
+        }
+        
+        this.showLoading();
+        
+        try {
+            const textData = {
+                text: this.textInput.value.trim(),
+                x: this.textPosition.x,
+                y: this.textPosition.y,
+                font_size: parseInt(this.fontSize.value),
+                color: this.textColor.value
+            };
+            
+            const response = await fetch('/add-text', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    filename: this.currentFilename,
+                    text_data: textData
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Update the processed image with the new text-added version
+                this.processedImage.src = `data:image/jpeg;base64,${result.image}`;
+                this.currentFilename = result.filename;
+                this.processedTitle.textContent = 'Text Added';
+                
+                // Go back to results
+                this.hideAllSections();
+                this.resultsSection.style.display = 'block';
+            } else {
+                this.showError(result.error || 'Failed to add text to image');
+            }
+        } catch (error) {
+            console.error('Add text error:', error);
+            this.showError('Network error while adding text');
+        }
+    }
+    
+    cancelTextAddition() {
+        this.hideAllSections();
+        this.resultsSection.style.display = 'block';
+    }
+
     hideAllSections() {
         this.loadingSection.style.display = 'none';
         this.brushSelectionSection.style.display = 'none';
         this.resultsSection.style.display = 'none';
         this.errorSection.style.display = 'none';
+        this.textAdditionSection.style.display = 'none';
     }
 }
 

@@ -109,14 +109,61 @@
                 </div>
             </div>
             <div class="action-buttons">
+                <button id="addTextBtn" class="add-text-btn">
+                    <i class="fas fa-font"></i>
+                    Add Text
+                </button>
                 <button id="downloadBtn" class="download-btn">
                     <i class="fas fa-download"></i>
-                    Download Processed Image
+                    Download Image
                 </button>
                 <button id="newImageBtn" class="new-image-btn">
                     <i class="fas fa-plus"></i>
                     Process New Image
                 </button>
+            </div>
+        </div>
+
+        <div class="text-addition-section" id="textAdditionSection" style="display: none;">
+            <h2>Add Text to Image</h2>
+            <p class="text-instructions">Click on the image where you want to add text, then customize the text properties below.</p>
+            
+            <div class="text-controls">
+                <div class="text-input-group">
+                    <label for="textInput">Text:</label>
+                    <input type="text" id="textInput" placeholder="Enter your text here..." maxlength="100">
+                </div>
+                
+                <div class="text-properties">
+                    <div class="property-group">
+                        <label for="fontSize">Font Size:</label>
+                        <input type="range" id="fontSize" min="12" max="100" value="40">
+                        <span id="fontSizeValue">40px</span>
+                    </div>
+                    
+                    <div class="property-group">
+                        <label for="textColor">Text Color:</label>
+                        <input type="color" id="textColor" value="#000000">
+                    </div>
+                </div>
+                
+                <div class="text-actions">
+                    <button id="applyTextBtn" class="apply-text-btn" disabled>
+                        <i class="fas fa-check"></i>
+                        Apply Text
+                    </button>
+                    <button id="cancelTextBtn" class="cancel-text-btn">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-preview-container">
+                <div class="text-canvas-container">
+                    <img id="textPreviewImage" alt="Click to add text">
+                    <div id="textPositionMarker" class="position-marker" style="display: none;"></div>
+                </div>
             </div>
         </div>
 

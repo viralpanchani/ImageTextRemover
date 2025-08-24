@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template, send_file
 import cv2
 import numpy as np
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, ImageDraw, ImageFont
 import os
 import uuid
 from werkzeug.utils import secure_filename
@@ -370,6 +370,90 @@ def download_file(filename):
     except Exception as e:
         print(f"Download error: {e}")
         return jsonify({'error': 'An error occurred during download'}), 500
+
+def add_text_to_image(image_path, output_path, text_data):
+    """Add text overlay to image"""
+    try:
+        # Load image
+        image = Image.open(image_path)
+        draw = ImageDraw.Draw(image)
+        
+        # Try to load a font, fallback to default if not available
+        try:
+            # Try to use a common system font
+            font_size = int(text_data.get('font_size', 40))
+            font = ImageFont.truetype("/System/Library/Fonts/Arial.ttf", font_size)
+        except:
+            try:
+                # Fallback to DejaVu Sans (common on Linux)
+                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size)
+            except:
+                # Use default font as last resort
+                font = ImageFont.load_default()
+        
+        # Get text properties
+        text = text_data.get('text', '')
+        x = int(text_data.get('x', 50))
+        y = int(text_data.get('y', 50))
+        color = text_data.get('color', '#000000')
+        
+        # Convert hex color to RGB
+        if color.startswith('#'):
+            color = tuple(int(color[i:i+2], 16) for i in (1, 3, 5))
+        
+        # Add text to image
+        draw.text((x, y), text, font=font, fill=color)
+        
+        # Save the image
+        image.save(output_path)
+        return True
+        
+    except Exception as e:
+        print(f"Error adding text to image: {e}")
+        return False
+
+@app.route('/add-text', methods=['POST'])
+def add_text():
+    try:
+        data = request.get_json()
+        
+        if not data or 'filename' not in data or 'text_data' not in data:
+            return jsonify({'error': 'Missing required data'}), 400
+        
+        filename = data['filename']
+        text_data = data['text_data']
+        
+        # Find the source image (processed image)
+        source_path = os.path.join(PROCESSED_FOLDER, filename)
+        if not os.path.exists(source_path):
+            return jsonify({'error': 'Source image not found'}), 404
+        
+        # Generate new filename for text-added image
+        base_name, ext = os.path.splitext(filename)
+        new_filename = f"text_{base_name}{ext}"
+        output_path = os.path.join(PROCESSED_FOLDER, new_filename)
+        
+        # Add text to image
+        success = add_text_to_image(source_path, output_path, text_data)
+        
+        if not success:
+            return jsonify({'error': 'Failed to add text to image'}), 500
+        
+        # Convert result to base64
+        result_b64 = image_to_base64(output_path)
+        
+        if not result_b64:
+            return jsonify({'error': 'Failed to process result image'}), 500
+        
+        return jsonify({
+            'success': True,
+            'image': result_b64,
+            'filename': new_filename
+        })
+        
+    except Exception as e:
+        print(f"Add text error: {e}")
+        return jsonify({'error': 'An error occurred while adding text'}), 500
 
 if __name__ == '__main__':
     import os
